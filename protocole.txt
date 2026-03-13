@@ -1,0 +1,23 @@
+Camera control:
+- exposure
+- gain
+- brightness
+- contrast
+ROI:
+- ROI enable
+- ROI x0
+- ROI y0
+- ROI dx
+- ROI dy
+Target:
+- x0
+- y0
+- tolerance
+- error x
+- error y
+- is hit (bool)
+Centroid:
+- x0
+- y0
+Image preview:
+- jpeg image

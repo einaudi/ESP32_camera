@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>XIAO ESP32-S3 Camera</title>
+        <!-- jeśli masz style.css w SPIFFS -->
+        <link rel="stylesheet" href="/style.css" />
+    </head>
+
+    <body>
+        <h2>XIAO ESP32-S3 Camera</h2>
+
+        <p class="small">
+            Snapshot: <a href="/preview" target="_blank">/preview</a>
+        </p>
+
+        <div class="row">
+            <div class="card">
+                <img id="jpg" src="/preview" />
+            </div>
+            
+            <div class="card controls">
+                <h3>Ustawienia kamery</h3>
+                <label for="exposure">Exposure (0..1200)</label>
+                <input id="exposure" type="range" min="0" max="1200" step="1" value="600" />
+                <div class="small">Aktualnie: <span id="exposure_val">600</span></div>
+
+                <label for="gain">Gain (0..30)</label>
+                <input id="gain" type="range" min="0" max="30" step="1" value="0" />
+                <div class="small">Aktualnie: <span id="gain_val">0</span></div>
+                
+                <label for="brightness">Brightness (-2..2)</label>
+                <input id="brightness" type="range" min="-2" max="2" step="1" value="0" />
+                <div class="small">Aktualnie: <span id="brightness_val">0</span></div>
+                
+                <label for="contrast">Contrast (-2..2)</label>
+                <input id="contrast" type="range" min="-2" max="2" step="1" value="0" />
+                <div class="small">Aktualnie: <span id="contrast_val">0</span></div>
+                
+                <div style="margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap;">
+                <button id="apply_control">Apply</button>
+                <button id="reset_control">Reset</button>
+                </div>
+                <div class="status" id="status_control">status: idle</div>
+            </div>
+
+            
+            <div class="card ROI">
+                <h3>Ustawienia ROI</h3>
+                <label for="roi_x0">x0 (0..320)</label>
+                <input id="roi_x0" type="range" min="0" max="320" step="1" value="0" />
+                <div class="small">Aktualnie: <span id="roi_x0_val">0</span></div>
+
+                <label for="roi_y0">y0 (0..240)</label>
+                <input id="roi_y0" type="range" min="0" max="240" step="1" value="0" />
+                <div class="small">Aktualnie: <span id="roi_y0_val">0</span></div>
+                
+                <label for="roi_width">Width (0..320)</label>
+                <input id="roi_width" type="range" min="0" max="320" step="1" value="50" />
+                <div class="small">Aktualnie: <span id="roi_width_val">50</span></div>
+                
+                <label for="roi_height">Height (0..240)</label>
+                <input id="roi_height" type="range" min="0" max="240" step="1" value="50" />
+                <div class="small">Aktualnie: <span id="roi_height_val">50</span></div>
+
+                <div class="roi-toggle">
+                <label class="switch">
+                    <input type="checkbox" id="roiEnable">
+                    <span class="slider"></span>
+                </label>
+                <span class="label">ROI enabled</span>
+                </div>
+                
+                <div style="margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap;">
+                <button id="apply_roi">Apply</button>
+                <button id="reset_roi">Reset</button>
+                </div>
+                
+                <div class="status" id="status_roi">status: idle</div>
+            </div>
+        </div>
+        <script src="/app.js"></script>
+    </body>
+</html>
