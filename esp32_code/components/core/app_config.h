@@ -12,7 +12,7 @@
 #define CAM_TRIGGER_GPIO GPIO_NUM_2
 
 // DEBUG
-#define LATENCY_DEBUG 1
+#define LATENCY_DEBUG 0
 
 /* =========================
    ACTIVE API
