@@ -28,6 +28,9 @@ typedef struct {
 
 void api_init(void);
 
+// General
+api_status_t api_idn(char* buf, size_t* len);
+
 // Camera control
 api_status_t api_set_exposure(int val);
 api_status_t api_set_gain(int val);
@@ -56,10 +59,12 @@ api_status_t api_get_ROI_enable(int* val);
 api_status_t api_set_target_x0(float val);
 api_status_t api_set_target_y0(float val);
 api_status_t api_set_target_tol(float val);
+api_status_t api_set_target_threshold(float val);
 
 api_status_t api_get_target_x0(float* val);
 api_status_t api_get_target_y0(float* val);
 api_status_t api_get_target_tol(float* val);
+api_status_t api_get_target_threshold(float* val);
 // Target error
 api_status_t api_get_target_error_x(float* val);
 api_status_t api_get_target_error_y(float* val);

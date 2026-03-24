@@ -37,6 +37,16 @@ void api_init(void) {
     #endif
 }
 
+// General
+api_status_t api_idn(char* buf, size_t* len) {
+    API_LOCK();
+
+    *len = sprintf(buf, "%s", DEV_NAME);
+
+    API_UNLOCK();
+    return API_OK;
+}
+
 /* =========================
    API camera
    ========================= */
@@ -251,6 +261,16 @@ api_status_t api_set_target_tol(float val) {
     API_UNLOCK();
     return API_OK;
 }
+api_status_t api_set_target_threshold(float val) {
+    ESP_LOGI(TAG, "Target brightness threshold: %f", val);
+    API_LOCK();
+
+    g_config.brightness_threshold = (uint8_t) val;
+    config_save(&g_config);
+
+    API_UNLOCK();
+    return API_OK;
+}
 
 api_status_t api_get_target_x0(float* val) {
     API_LOCK();
@@ -269,6 +289,13 @@ api_status_t api_get_target_y0(float* val) {
 api_status_t api_get_target_tol(float* val) {
     API_LOCK();
     *val = g_config.target_tolerance;
+
+    API_UNLOCK();
+    return API_OK;
+}
+api_status_t api_get_target_threshold(float* val) {
+    API_LOCK();
+    *val = (float) g_config.brightness_threshold;
 
     API_UNLOCK();
     return API_OK;

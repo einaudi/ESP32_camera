@@ -27,3 +27,4 @@ esp_err_t camera_worker_start();
 bool queue_cam_cmd(cam_cmd_type_t type, int value);
 
 esp_err_t camera_capture();
+void camera_capture_notify_from_isr(void);

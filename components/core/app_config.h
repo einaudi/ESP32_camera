@@ -2,8 +2,17 @@
 
 #include "esp_camera.h"
 
+// Device name and version
+#define DEV_NAME "ESP32-S3 CAMERA, v2.0"
+
 // Snapshot JPEG limit (ochrona heap)
-#define MAX_JPEG_SIZE (300 * 1024)
+// #define MAX_JPEG_SIZE (300 * 1024)
+
+// Trigger interrupt
+#define CAM_TRIGGER_GPIO GPIO_NUM_2
+
+// DEBUG
+#define LATENCY_DEBUG 1
 
 /* =========================
    ACTIVE API
@@ -48,7 +57,7 @@ bool config_save(const config_t *cfg);
 void config_apply();
 
 // Other constants
-#define TARGET_MAX_HIT_COUNT 5
+#define TARGET_MAX_HIT_COUNT 1
 
 /* =========================
    CAMERA PINOUT (XIAO S3 Sense)
@@ -73,5 +82,6 @@ void config_apply();
 #define CAM_PIN_HREF   47
 #define CAM_PIN_PCLK   13
 
-#define CAM_FRAMESIZE FRAMESIZE_QVGA // 320x240
+#define CAM_FRAMESIZE FRAMESIZE_VGA // 640x480
+// #define CAM_FRAMESIZE FRAMESIZE_QVGA // 320x240
 // #define CAM_FRAMESIZE FRAMESIZE_QQVGA // 160x120

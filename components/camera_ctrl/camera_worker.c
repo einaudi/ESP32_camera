@@ -6,12 +6,15 @@
 
 #include "app_config.h"
 #include "analysis.h"
+#include "utils.h"
 
 static const char *TAG = "cam_worker";
 
 
 static TaskHandle_t camera_task_handle = NULL;
 static TaskHandle_t capture_waiter = NULL;
+static volatile bool capture_requested = false;
+static volatile bool capture_in_progress = false;
 
 static QueueHandle_t g_cmd_queue = NULL;
 
@@ -64,25 +67,34 @@ static void camera_task(void *arg) {
     sensor_t *s = esp_camera_sensor_get();
 
     cam_cmd_t cmd;
-    uint32_t notify_val;
 
     ESP_LOGI(TAG, "Camera ready");
 
     while (1) {
+        // Wake up task
+        xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+
         // 1) Handle all pending commands
         while (xQueueReceive(g_cmd_queue, &cmd, 0) == pdTRUE) {
             apply_cmd_to_sensor(s, &cmd);
         }
 
         // 2) Take snapshot
-        if (xTaskNotifyWait(0, 0, &notify_val, 0) == pdTRUE)
+        if (capture_requested)
         {
+            capture_in_progress = true;
+            capture_requested = false;
+
             ESP_LOGI(TAG, "Camera snapshot initiated");
 
             camera_fb_t* fb;
 
             camera_sensor_start(s);
-            // // flush frame to ensure latest
+#if LATENCY_DEBUG
+            latency_measure_capture_event();
+            latency_measure_print_stats();
+#endif
+            // flush frame to ensure latest
             fb = esp_camera_fb_get();
             esp_camera_fb_return(fb);
             // capture
@@ -134,6 +146,8 @@ static void camera_task(void *arg) {
             // fb = esp_camera_fb_get();
             // if(fb) esp_camera_fb_return(fb);
 
+            capture_in_progress = false;
+
             if (capture_waiter)
             {
                 xTaskNotify(capture_waiter, 1, eSetValueWithOverwrite);
@@ -142,7 +156,7 @@ static void camera_task(void *arg) {
             ESP_LOGI(TAG, "Camera snapshot taken!");
         }
 
-        vTaskDelay(pdMS_TO_TICKS(10));
+        // vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -224,13 +238,22 @@ esp_err_t camera_worker_start() {
 bool queue_cam_cmd(cam_cmd_type_t type, int value) {
     if (!g_cmd_queue) return false;
     cam_cmd_t cmd = {.type = type, .value = value};
-    return (xQueueSend(g_cmd_queue, &cmd, 0) == pdTRUE);
+    
+    if(xQueueSend(g_cmd_queue, &cmd, 0) != pdTRUE) return false;
+
+    if (camera_task_handle) {
+        xTaskNotify(camera_task_handle, 0, eNoAction);
+    }
+
+    return true;
 }
 
 esp_err_t camera_capture() {
     capture_waiter = xTaskGetCurrentTaskHandle();
 
-    xTaskNotify(camera_task_handle, 1, eSetValueWithOverwrite);
+    if(!capture_in_progress) capture_requested = true;
+
+    xTaskNotify(camera_task_handle, 0, eNoAction);
 
     uint32_t val;
 
@@ -242,4 +265,21 @@ esp_err_t camera_capture() {
     }
 
     return ESP_OK;
+}
+
+void IRAM_ATTR camera_capture_notify_from_isr(void)
+{
+    if (camera_task_handle == NULL) {
+        return;
+    }
+
+    if(!capture_in_progress) capture_requested = true;
+
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+    vTaskNotifyGiveFromISR(camera_task_handle, &xHigherPriorityTaskWoken);
+
+    if (xHigherPriorityTaskWoken) {
+        portYIELD_FROM_ISR();
+    }
 }

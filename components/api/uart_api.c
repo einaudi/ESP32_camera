@@ -20,6 +20,19 @@
 static const char *TAG = "uart_api";
 
 // Commands handling
+// General
+static esp_err_t general_idn(char *out, size_t maxlen) {
+
+    char buf[32];
+    size_t len;
+
+    if(api_idn(buf, &len) != API_OK) return ESP_FAIL;
+
+    snprintf(out, maxlen, ":%s", buf);
+    return ESP_OK;
+}
+
+
 // Camera
 static esp_err_t camera_set_exposure(const char *arg) {
     int value = atoi(arg);
@@ -141,6 +154,11 @@ static esp_err_t target_set_tol(const char *arg) {
     if(api_set_target_tol(value) == API_OK) return ESP_OK;
     else return ESP_FAIL;
 }
+static esp_err_t target_set_threshold(const char *arg) {
+    float value =  atof(arg);
+    if(api_set_target_threshold(value) == API_OK) return ESP_OK;
+    else return ESP_FAIL;
+}
 
 static esp_err_t target_get_x0(char *out, size_t maxlen) {
     float value;
@@ -157,6 +175,12 @@ static esp_err_t target_get_y0(char *out, size_t maxlen) {
 static esp_err_t target_get_tol(char *out, size_t maxlen) {
     float value;
     if(api_get_target_tol(&value) != API_OK) return ESP_FAIL;
+    snprintf(out, maxlen, ":%f", value);
+    return ESP_OK;
+}
+static esp_err_t target_get_threshold(char *out, size_t maxlen) {
+    float value;
+    if(api_get_target_threshold(&value) != API_OK) return ESP_FAIL;
     snprintf(out, maxlen, ":%f", value);
     return ESP_OK;
 }
@@ -213,7 +237,43 @@ static void send_image_chunked(uint8_t *data, uint32_t len) {
         if (chunk > CHUNK_SIZE)
             chunk = CHUNK_SIZE;
 
-        ssize_t n = write(STDOUT_FILENO,
+        size_t n = write(STDOUT_FILENO,
+                          data + sent,
+                          chunk);
+
+        // if (n <= 0) {
+        //     ESP_LOGE(TAG, "Write error");
+        //     return;
+        // }
+
+        sent += n;
+
+        // vTaskDelay(pdMS_TO_TICKS(10));
+    }
+
+    write(STDOUT_FILENO, "END OF IMAGE\n", 13);
+}
+
+static void send_image_chunked_sync(uint8_t *data, uint32_t len) {
+    // Header
+    char header[32];
+    int header_len = snprintf(header, sizeof(header), ":IMG %u CHUNK_SIZE %u\n", (unsigned)len, (unsigned)CHUNK_SIZE);
+    write(STDOUT_FILENO, header, header_len);
+
+    // Data chunks
+    size_t sent = 0;
+    uint16_t chunk_id = 0;
+    while (sent < len) {
+
+        size_t chunk = len - sent;
+        if (chunk > CHUNK_SIZE)
+            chunk = CHUNK_SIZE;
+
+        // Chunk header
+        header_len = snprintf(header, sizeof(header), ":CHUNK_ID %u\n", (unsigned)chunk_id);
+        write(STDOUT_FILENO, header, header_len);
+        // Chunk 
+        size_t n = write(STDOUT_FILENO,
                           data + sent,
                           chunk);
 
@@ -223,13 +283,16 @@ static void send_image_chunked(uint8_t *data, uint32_t len) {
         }
 
         sent += n;
+        chunk_id++;
     }
 
-    write(STDOUT_FILENO, "END\n", 5);
+    // End
+    header_len = snprintf(header, sizeof(header), ":END CHUNKS_TOTAL %u\n", (unsigned)chunk_id);
+    write(STDOUT_FILENO, header, header_len);
+
 }
 
-static esp_err_t image_get_preview(char *out, size_t maxlen)
-{
+static esp_err_t image_get_preview(char *out, size_t maxlen) {
     (void)out;
     (void)maxlen;
 
@@ -258,6 +321,7 @@ static esp_err_t image_get_preview(char *out, size_t maxlen)
 // Commands table
 static const command_entry_t command_table[] =
 {
+    {"*IDN", NULL, general_idn},
     {":camera:exposure", camera_set_exposure, camera_get_exposure},
     {":camera:gain", camera_set_gain, camera_get_gain},
     {":camera:brightness", camera_set_brightness, camera_get_brightness},
@@ -270,6 +334,7 @@ static const command_entry_t command_table[] =
     {":target:x0", target_set_x0, target_get_x0},
     {":target:y0", target_set_y0, target_get_y0},
     {":target:tolerance", target_set_tol, target_get_tol},
+    {":target:threshold", target_set_threshold, target_get_threshold},
     {":target:error_x", NULL, target_get_error_x},
     {":target:error_y", NULL, target_get_error_y},
     {":target:hit", NULL, target_get_is_hit},
@@ -474,7 +539,7 @@ void console_api_init(void) {
         "console_transport",
         4096,
         NULL,
-        5,
+        3,
         NULL
     );
 

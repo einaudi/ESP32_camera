@@ -831,6 +831,7 @@ esp_err_t http_api_start(void) {
     config.max_open_sockets = 6;
     config.stack_size = 8192;
     config.uri_match_fn = httpd_uri_match_wildcard;
+    config.task_priority = 2;
 
     ESP_LOGI(TAG, "Starting API server on port %d", config.server_port);
     if (httpd_start(&g_api_server, &config) != ESP_OK) {

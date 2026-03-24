@@ -46,17 +46,21 @@ roi_t g_roi = {0};
 
 bool roi_validate_and_set(uint16_t x0, uint16_t y0,
                           uint16_t dx, uint16_t dy) {
-    uint16_t img_width = 0;
-    uint16_t img_height = 0;
-    if (CAM_FRAMESIZE == FRAMESIZE_QVGA) {
-        img_width = 320;
-        img_height = 240;
-    }
-    else if (CAM_FRAMESIZE == FRAMESIZE_QQVGA) {
-        img_width = 160;
-        img_height = 120;
-    }
-    else return false;
+    uint16_t img_width = g_image_snapshot.width;
+    uint16_t img_height = g_image_snapshot.height;
+    // if (CAM_FRAMESIZE == FRAMESIZE_VGA) {
+    //     img_width = 640;
+    //     img_height = 480;
+    // }
+    // else if (CAM_FRAMESIZE == FRAMESIZE_QVGA) {
+    //     img_width = 320;
+    //     img_height = 240;
+    // }
+    // else if (CAM_FRAMESIZE == FRAMESIZE_QQVGA) {
+    //     img_width = 160;
+    //     img_height = 120;
+    // }
+    // else return false;
 
     // dx, dy muszą być > 0
     if (dx == 0 || dy == 0)

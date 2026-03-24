@@ -3,6 +3,7 @@ idf_component_register(
         "analysis.c"
         "app_config.c"
         "utils.c"
+        "gpio_trigger.c"
 
     INCLUDE_DIRS
         "."

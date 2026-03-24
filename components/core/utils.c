@@ -174,3 +174,78 @@ bool get_preview_large(uint8_t** rgb_buf, size_t* rgb_size) {
     ESP_LOGI(TAG, "Preview prepared!");
     return true;
 }
+
+#if LATENCY_DEBUG
+
+#include "esp_timer.h"
+#include <math.h>
+#include <stdint.h>
+
+#define LATENCY_BUF_SIZE 100
+
+static volatile uint32_t t_start_buf[LATENCY_BUF_SIZE];
+static volatile uint32_t t_idx = 0;
+
+static uint32_t results[LATENCY_BUF_SIZE];
+static uint32_t results_count = 0;
+
+
+// --- ISR START ---
+void IRAM_ATTR latency_measure_isr_event(void)
+{
+    t_start_buf[t_idx] = (uint32_t)esp_timer_get_time();
+}
+
+
+// --- TASK STOP ---
+void latency_measure_capture_event(void)
+{
+    if (t_idx >= LATENCY_BUF_SIZE) return;
+
+    uint32_t t_stop = (uint32_t)esp_timer_get_time();
+    uint32_t t_start = t_start_buf[t_idx];
+
+    uint32_t dt = t_stop - t_start;
+
+    results[t_idx] = dt;
+
+    t_idx++;
+    results_count = t_idx;
+}
+
+// --- STATS ---
+void latency_measure_print_stats(void)
+{
+    if (t_idx >= LATENCY_BUF_SIZE) latency_measure_reset();
+
+    double sum = 0.0;
+    double sum_sq = 0.0;
+
+    for (uint32_t i = 0; i < results_count; i++) {
+        double x = (double)results[i];
+        sum += x;
+        sum_sq += x * x;
+    }
+
+    double mean = sum / results_count;
+    double var = (sum_sq / results_count) - (mean * mean);
+    double std = sqrt(var);
+
+    uint32_t t1 = esp_timer_get_time();
+    uint32_t t2 = esp_timer_get_time();
+
+    ESP_LOGI(TAG, "Latency stats: N=%lu latency=%lu us, mean=%.2f us, std=%.2f us, overhead=%lu us",
+             t_idx-1, results[t_idx-1], mean, std, t2-t1);
+}
+
+void latency_measure_reset(void) {
+    ESP_LOGI(TAG, "Latency stats reset!");
+
+    memset((void*)t_start_buf, 0, sizeof(t_start_buf));
+    t_idx = 0;
+
+    memset((void*)results, 0, sizeof(results));
+    results_count = 0;
+}
+
+#endif // LATENCY_DEBUG
