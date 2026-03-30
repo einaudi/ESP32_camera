@@ -3,7 +3,7 @@
 #include "esp_camera.h"
 
 // Device name and version
-#define DEV_NAME "ESP32-S3 CAMERA, v2.0"
+#define DEV_NAME "ESP32-S3 CAMERA, v2.1"
 
 // Snapshot JPEG limit (ochrona heap)
 // #define MAX_JPEG_SIZE (300 * 1024)
@@ -40,6 +40,7 @@ typedef struct {
    float target_y;
    float target_tolerance;
    uint8_t brightness_threshold;
+   uint8_t ROI_bound;
 
    uint16_t roi_x0;
    uint16_t roi_y0;

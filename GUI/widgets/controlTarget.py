@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (
 )
 
 from widgets.ParameterWidget import ParameterWidget
+from widgets.toggleSwitch import LabeledToggle
 
 from config import config as cfg
 
@@ -16,6 +17,7 @@ class TargetControlWidget(QWidget):
         self._init_widgets()
         self._init_layout()
 
+        self._widgets['switchBindToROI'].toggled.connect(self._bind_to_ROI)
         self._widgets['btnApply'].clicked.connect(self._apply_clicked)
 
         self.available_data = []
@@ -51,6 +53,7 @@ class TargetControlWidget(QWidget):
                 10,
                 0
             ),
+            'switchBindToROI': LabeledToggle('Bind to ROI'),
             'btnApply': QPushButton('Apply')
         }
 
@@ -64,6 +67,7 @@ class TargetControlWidget(QWidget):
         mainLayout.addWidget(self._widgets['parameter_y0'])
         mainLayout.addWidget(self._widgets['parameter_tol'])
         mainLayout.addWidget(self._widgets['parameter_threshold'])
+        mainLayout.addWidget(self._widgets['switchBindToROI'])
         mainLayout.addLayout(btnBox)
 
         mainLayout.addStretch(1)
@@ -87,14 +91,22 @@ class TargetControlWidget(QWidget):
     def _send_x0(self):
 
         value = int(self._widgets['parameter_x0'].value())
-        cmd = ':target:x0 {:d}'.format(value)
+
+        if self._widgets['switchBindToROI'].isChecked():
+            cmd = ':target:relative:x0 {:d}'.format(value)
+        else:
+            cmd = ':target:x0 {:d}'.format(value)
 
         self._parent.query(cmd, self._validate_set_response)
 
     def _send_y0(self):
 
         value = int(self._widgets['parameter_y0'].value())
-        cmd = ':target:y0 {:d}'.format(value)
+
+        if self._widgets['switchBindToROI'].isChecked():
+            cmd = ':target:relative:y0 {:d}'.format(value)
+        else:
+            cmd = ':target:y0 {:d}'.format(value)
 
         self._parent.query(cmd, self._validate_set_response)
 
@@ -112,12 +124,20 @@ class TargetControlWidget(QWidget):
 
         self._parent.query(cmd, self._validate_set_response)
 
+    def _send_ROI_bound(self):
+
+        value = int(self._widgets['switchBindToROI'].isChecked())
+        cmd = ':target:bindroi {:d}'.format(value)
+
+        self._parent.query(cmd, self._validate_set_response)
+
     def _apply_clicked(self):
 
         self._send_x0()
         self._send_y0()
         self._send_tol()
         self._send_threshold()
+        self._send_ROI_bound()
 
     def set_parameter(self, param: str, value: float):
 
@@ -129,6 +149,8 @@ class TargetControlWidget(QWidget):
             self._widgets['parameter_tol'].set_value(value)
         elif param == 'threshold':
             self._widgets['parameter_threshold'].set_value(value)
+        elif param == 'ROIbound':
+            self._widgets['switchBindToROI'].setChecked(int(value))
 
     def get_parameters(self):
 
@@ -143,3 +165,10 @@ class TargetControlWidget(QWidget):
 
         cmd = ':target:threshold?'
         self._parent.query(cmd, lambda resp: self._validate_get_response('threshold', resp))
+
+        cmd = ':target:bindroi?'
+        self._parent.query(cmd, lambda resp: self._validate_get_response('ROIbound', resp))
+
+    def _bind_to_ROI(self):
+
+        print(self._widgets['switchBindToROI'].isChecked())

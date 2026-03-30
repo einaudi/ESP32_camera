@@ -203,7 +203,16 @@ class SerialWorker(QObject):
                 "BGR"
             )
         except:
-            img = None
+            try:
+                img = Image.frombytes(
+                    "L",
+                    (640, 480),
+                    data,
+                    "raw",
+                    "L"
+                )
+            except:
+                img = None
 
         # Send response to caller
         if self.current_command:

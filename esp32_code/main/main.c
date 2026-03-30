@@ -44,10 +44,10 @@ void app_main(void)
     config_load(&g_config);
     config_apply();
 
-    for(uint8_t i=0; i<10; i++) {
-        camera_capture();
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
+    // for(uint8_t i=0; i<10; i++) {
+    //     camera_capture();
+    //     vTaskDelay(pdMS_TO_TICKS(100));
+    // }
 
 #if LATENCY_DEBUG
     latency_measure_reset();

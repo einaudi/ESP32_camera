@@ -15,6 +15,13 @@
 static const char *TAG = "utils";
 
 
+void grayscale_to_buff(uint8_t *gray, uint8_t *img, int width, int height) {
+    for (int i = 0; i < width * height; i++) {
+        uint8_t v = gray[i];
+        img[i + 0] = v;
+    }
+}
+
 void grayscale_to_rgb888(uint8_t *gray, uint8_t *rgb, int width, int height) {
     for (int i = 0; i < width * height; i++) {
         uint8_t v = gray[i];
@@ -95,6 +102,31 @@ void draw_centroid_rgb(uint8_t *rgb, int img_w, int img_h, const centroid_t *c, 
             else SET_PIXEL_BGR(rgb, p, 0, 0, 255);
         }
     }
+}
+
+bool get_image_large(uint8_t** img_buf, size_t* img_size) {
+    ESP_LOGI(TAG, "Image requested!");
+
+    if (!g_image_snapshot.valid) {
+        return false;
+    }
+
+    if (xSemaphoreTake(g_image_mutex, pdTICKS_TO_MS(1000)) != pdTRUE) {
+        return false;
+    }
+
+    int w = g_image_snapshot.width;
+    int h = g_image_snapshot.height;
+
+    *img_buf = malloc(w * h);
+    *img_size = w * h;
+
+    grayscale_to_buff(g_image_snapshot.buf, *img_buf, w, h);
+
+    xSemaphoreGive(g_image_mutex);
+
+    ESP_LOGI(TAG, "Image prepared!");
+    return true;
 }
 
 bool get_preview(uint8_t** jpg_buf, size_t* jpg_len) {

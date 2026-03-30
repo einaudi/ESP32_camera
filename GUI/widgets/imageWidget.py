@@ -20,6 +20,9 @@ class ImageWidget(QWidget):
         self._btnCapture = QPushButton("Capture image")
         self._btnCapture.clicked.connect(self._capture_image)
 
+        self._btnImage = QPushButton("Get image")
+        self._btnImage.clicked.connect(self._get_image)
+
         self._btnPreview = QPushButton("Capture preview")
         self._btnPreview.clicked.connect(self._capture_preview)
 
@@ -28,6 +31,7 @@ class ImageWidget(QWidget):
 
         buttons_layout = QHBoxLayout()
         buttons_layout.addWidget(self._btnCapture)
+        buttons_layout.addWidget(self._btnImage)
         buttons_layout.addWidget(self._btnPreview)
         buttons_layout.addWidget(self._btnSave)
 
@@ -89,6 +93,11 @@ class ImageWidget(QWidget):
 
         cmd = ':image:capture'
         self._parent.query(cmd, self._validate_response)
+
+    def _get_image(self):
+
+        cmd = ':image:image?'
+        self._parent.query(cmd, self.set_image)
 
     def _capture_preview(self):
 

@@ -135,11 +135,16 @@ api_status_t api_set_ROI_x0(uint16_t val) {
     ESP_LOGI(TAG, "ROI x0: %d", val);
     API_LOCK();
 
+    int16_t shift = val - g_roi.x0;
+
     if(!roi_validate_and_set(val, g_roi.y0, g_roi.dx, g_roi.dy)) {
         API_UNLOCK();
         return API_ERR_INVALID_ARG;
     }
     else {
+        if(g_config.ROI_bound) {
+            g_target.x += shift;
+        }
         API_UNLOCK();
         return API_OK;
     }
@@ -148,11 +153,16 @@ api_status_t api_set_ROI_y0(uint16_t val) {
     ESP_LOGI(TAG, "ROI y0: %d", val);
     API_LOCK();
 
+    int16_t shift = val - g_roi.y0;
+
     if(!roi_validate_and_set(g_roi.x0, val, g_roi.dx, g_roi.dy)) {
         API_UNLOCK();
         return API_ERR_INVALID_ARG;
     }
     else {
+        if(g_config.ROI_bound) {
+            g_target.y += shift;
+        }
         API_UNLOCK();
         return API_OK;
     }
@@ -249,6 +259,30 @@ api_status_t api_set_target_y0(float val) {
     API_UNLOCK();
     return API_OK;
 }
+api_status_t api_set_target_x0_relative(float val) {
+    ESP_LOGI(TAG, "Target x0 relative: %f", val);
+    API_LOCK();
+
+    val += g_roi.x0;
+    g_target.x = val;
+    g_config.target_x = val;
+    config_save(&g_config);
+
+    API_UNLOCK();
+    return API_OK;
+}
+api_status_t api_set_target_y0_relative(float val) {
+    ESP_LOGI(TAG, "Target y0 relative: %f", val);
+    API_LOCK();
+
+    val += g_roi.y0;
+    g_target.y = val;
+    g_config.target_y = val;
+    config_save(&g_config);
+
+    API_UNLOCK();
+    return API_OK;
+}
 api_status_t api_set_target_tol(float val) {
     ESP_LOGI(TAG, "Target tolerance: %f", val);
     API_LOCK();
@@ -271,6 +305,16 @@ api_status_t api_set_target_threshold(float val) {
     API_UNLOCK();
     return API_OK;
 }
+api_status_t api_set_target_ROI_bound(uint8_t val) {
+    ESP_LOGI(TAG, "Target ROI bound: %d", val);
+    API_LOCK();
+
+    g_config.ROI_bound = val ? 1 : 0;
+    config_save(&g_config);
+
+    API_UNLOCK();
+    return API_OK;
+}
 
 api_status_t api_get_target_x0(float* val) {
     API_LOCK();
@@ -286,6 +330,20 @@ api_status_t api_get_target_y0(float* val) {
     API_UNLOCK();
     return API_OK;
 }
+api_status_t api_get_target_x0_relative(float* val) {
+    API_LOCK();
+    *val = g_target.x - g_roi.x0;
+
+    API_UNLOCK();
+    return API_OK;
+}
+api_status_t api_get_target_y0_relative(float* val) {
+    API_LOCK();
+    *val = g_target.y - g_roi.y0;
+
+    API_UNLOCK();
+    return API_OK;
+}
 api_status_t api_get_target_tol(float* val) {
     API_LOCK();
     *val = g_config.target_tolerance;
@@ -296,6 +354,13 @@ api_status_t api_get_target_tol(float* val) {
 api_status_t api_get_target_threshold(float* val) {
     API_LOCK();
     *val = (float) g_config.brightness_threshold;
+
+    API_UNLOCK();
+    return API_OK;
+}
+api_status_t api_get_target_ROI_bound(int* val) {
+    API_LOCK();
+    *val = g_config.ROI_bound ? 1 : 0;
 
     API_UNLOCK();
     return API_OK;
@@ -337,6 +402,22 @@ api_status_t api_get_centroid_x0(float* val) {
 api_status_t api_get_centroid_y0(float* val) {
     API_LOCK();
     if(g_centroid.valid) *val = g_centroid.y;
+    else *val = -1;
+
+    API_UNLOCK();
+    return API_OK;
+}
+api_status_t api_get_centroid_x0_relative(float* val) {
+    API_LOCK();
+    if(g_centroid.valid) *val = g_centroid.x - (float) g_roi.x0;
+    else *val = -1;
+
+    API_UNLOCK();
+    return API_OK;
+}
+api_status_t api_get_centroid_y0_relative(float* val) {
+    API_LOCK();
+    if(g_centroid.valid) *val = g_centroid.y - (float) g_roi.y0;
     else *val = -1;
 
     API_UNLOCK();

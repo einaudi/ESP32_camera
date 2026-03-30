@@ -20,6 +20,7 @@ const config_t f_config = {
     .target_y = 25,
     .target_tolerance = 5.,
     .brightness_threshold = 10,
+    .ROI_bound = 0,
 
     .roi_x0 = 0,
     .roi_y0 = 0,
@@ -27,7 +28,7 @@ const config_t f_config = {
     .roi_dy = 50,
     .roi_enabled = 0,
 
-    .version = 1
+    .version = 2
 };
 
 bool config_load(config_t *cfg) {

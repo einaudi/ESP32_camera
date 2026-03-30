@@ -90,15 +90,15 @@ static void camera_task(void *arg) {
             camera_fb_t* fb;
 
             camera_sensor_start(s);
-#if LATENCY_DEBUG
-            latency_measure_capture_event();
-            latency_measure_print_stats();
-#endif
             // flush frame to ensure latest
             fb = esp_camera_fb_get();
             esp_camera_fb_return(fb);
             // capture
             fb = esp_camera_fb_get();
+#if LATENCY_DEBUG
+            latency_measure_capture_event();
+            latency_measure_print_stats();
+#endif
             camera_sensor_stop(s);
 
 
@@ -145,6 +145,9 @@ static void camera_task(void *arg) {
             // flush queue
             // fb = esp_camera_fb_get();
             // if(fb) esp_camera_fb_return(fb);
+            // flush frame to ensure latest
+            // fb = esp_camera_fb_get();
+            // esp_camera_fb_return(fb);
 
             capture_in_progress = false;
 
@@ -195,7 +198,8 @@ esp_err_t camera_worker_start() {
     config.fb_count = 1;
 
     config.fb_location = CAMERA_FB_IN_PSRAM;
-    config.grab_mode = CAMERA_GRAB_LATEST; // CAMERA_GRAB_WHEN_EMPTY;
+    config.grab_mode = CAMERA_GRAB_LATEST;
+    // config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
 
     g_image_mutex = xSemaphoreCreateMutex();
     if (!g_image_mutex) return ESP_ERR_NO_MEM;

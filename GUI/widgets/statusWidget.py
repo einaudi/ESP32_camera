@@ -23,6 +23,8 @@ class StatusWidget(QWidget):
 
         self.cx = QLabel('{:7.2f}'.format(0))
         self.cy = QLabel('{:7.2f}'.format(0))
+        self.cxRelative = QLabel('{:7.2f}'.format(0))
+        self.cyRelative = QLabel('{:7.2f}'.format(0))
         self.error_x = QLabel('{:7.2f}'.format(0))
         self.error_y = QLabel('{:7.2f}'.format(0))
 
@@ -31,8 +33,12 @@ class StatusWidget(QWidget):
 
         self.cx.setFont(font)
         self.cx.setAlignment(Qt.AlignRight)
+        self.cxRelative.setFont(font)
+        self.cxRelative.setAlignment(Qt.AlignRight)
         self.cy.setFont(font)
         self.cy.setAlignment(Qt.AlignRight)
+        self.cyRelative.setFont(font)
+        self.cyRelative.setAlignment(Qt.AlignRight)
         self.error_x.setFont(font)
         self.error_x.setAlignment(Qt.AlignRight)
         self.error_y.setFont(font)
@@ -64,15 +70,21 @@ class StatusWidget(QWidget):
 
         layout.addWidget(QLabel("Centroid X:"), 0, 0)
         layout.addWidget(self.cx, 0, 1)
-        layout.addWidget(QLabel("Error X:"), 0, 2)
-        layout.addWidget(self.error_x, 0, 3)
+        layout.addWidget(QLabel("ROI relative X:"), 1, 0)
+        layout.addWidget(self.cxRelative, 1, 1)
+        layout.addWidget(QLabel("Error X:"), 2, 0)
+        layout.addWidget(self.error_x, 2, 1)
+
+        layout.addWidget(QLabel("Centroid Y:"), 0, 2)
+        layout.addWidget(self.cy, 0, 3)
+        layout.addWidget(QLabel("ROI relative Y:"), 1, 2)
+        layout.addWidget(self.cyRelative, 1, 3)
+        layout.addWidget(QLabel("Error Y:"), 2, 2)
+        layout.addWidget(self.error_y, 2, 3)
+
         layout.addWidget(QLabel("Hit status:"), 0, 4)
         layout.addWidget(self.hitStatusLED, 0, 5)
 
-        layout.addWidget(QLabel("Centroid Y:"), 1, 0)
-        layout.addWidget(self.cy, 1, 1)
-        layout.addWidget(QLabel("Error Y:"), 1, 2)
-        layout.addWidget(self.error_y, 1, 3)
         layout.addWidget(self.btnGetData, 1, 4, 1, 2)
 
         # Postprocessing
@@ -93,8 +105,12 @@ class StatusWidget(QWidget):
 
         if param == 'centroid_x':
             self.cx.setText('{:7.2f}'.format(value))
+        elif param == 'centroid_x_relative':
+            self.cxRelative.setText('{:7.2f}'.format(value))
         elif param == 'centroid_y':
             self.cy.setText('{:7.2f}'.format(value))
+        elif param == 'centroid_y_relative':
+            self.cyRelative.setText('{:7.2f}'.format(value))
         elif param == 'error_x':
             self.error_x.setText('{:7.2f}'.format(value))
         elif param == 'error_y':
@@ -121,10 +137,19 @@ class StatusWidget(QWidget):
         cmd = ':centroid:y0?'
         self._parent.query(cmd, lambda resp: self._validate_response('centroid_y', resp))
 
-        cmd = ':target:error_x?'
+        cmd = ':centroid:relative:x0?'
+        self._parent.query(cmd, lambda resp: self._validate_response('centroid_x_relative', resp))
+
+        cmd = ':centroid:y0?'
+        self._parent.query(cmd, lambda resp: self._validate_response('centroid_y', resp))
+
+        cmd = ':centroid:relative:y0?'
+        self._parent.query(cmd, lambda resp: self._validate_response('centroid_y_relative', resp))
+
+        cmd = ':target:error:x?'
         self._parent.query(cmd, lambda resp: self._validate_response('error_x', resp))
 
-        cmd = ':target:error_y?'
+        cmd = ':target:error:y?'
         self._parent.query(cmd, lambda resp: self._validate_response('error_y', resp))
 
         cmd = ':target:hit?'

@@ -58,13 +58,19 @@ api_status_t api_get_ROI_enable(int* val);
 // Target control
 api_status_t api_set_target_x0(float val);
 api_status_t api_set_target_y0(float val);
+api_status_t api_set_target_x0_relative(float val);
+api_status_t api_set_target_y0_relative(float val);
 api_status_t api_set_target_tol(float val);
 api_status_t api_set_target_threshold(float val);
+api_status_t api_set_target_ROI_bound(uint8_t val);
 
 api_status_t api_get_target_x0(float* val);
 api_status_t api_get_target_y0(float* val);
+api_status_t api_get_target_x0_relative(float* val);
+api_status_t api_get_target_y0_relative(float* val);
 api_status_t api_get_target_tol(float* val);
 api_status_t api_get_target_threshold(float* val);
+api_status_t api_get_target_ROI_bound(int* val);
 // Target error
 api_status_t api_get_target_error_x(float* val);
 api_status_t api_get_target_error_y(float* val);
@@ -73,6 +79,8 @@ api_status_t api_get_target_is_hit(uint8_t* val);
 // Centroid data
 api_status_t api_get_centroid_x0(float* val);
 api_status_t api_get_centroid_y0(float* val);
+api_status_t api_get_centroid_x0_relative(float* val);
+api_status_t api_get_centroid_y0_relative(float* val);
 
 // Image
 api_status_t api_snapshot();

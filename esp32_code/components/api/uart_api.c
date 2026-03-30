@@ -149,6 +149,16 @@ static esp_err_t target_set_y0(const char *arg) {
     if(api_set_target_y0(value) == API_OK) return ESP_OK;
     else return ESP_FAIL;
 }
+static esp_err_t target_set_x0_relative(const char *arg) {
+    float value =  atof(arg);
+    if(api_set_target_x0_relative(value) == API_OK) return ESP_OK;
+    else return ESP_FAIL;
+}
+static esp_err_t target_set_y0_relative(const char *arg) {
+    float value =  atof(arg);
+    if(api_set_target_y0_relative(value) == API_OK) return ESP_OK;
+    else return ESP_FAIL;
+}
 static esp_err_t target_set_tol(const char *arg) {
     float value =  atof(arg);
     if(api_set_target_tol(value) == API_OK) return ESP_OK;
@@ -157,6 +167,11 @@ static esp_err_t target_set_tol(const char *arg) {
 static esp_err_t target_set_threshold(const char *arg) {
     float value =  atof(arg);
     if(api_set_target_threshold(value) == API_OK) return ESP_OK;
+    else return ESP_FAIL;
+}
+static esp_err_t target_set_ROI_bound(const char *arg) {
+    uint8_t value = (uint8_t) atoi(arg);
+    if(api_set_target_ROI_bound(value) == API_OK) return ESP_OK;
     else return ESP_FAIL;
 }
 
@@ -172,6 +187,18 @@ static esp_err_t target_get_y0(char *out, size_t maxlen) {
     snprintf(out, maxlen, ":%f", value);
     return ESP_OK;
 }
+static esp_err_t target_get_x0_relative(char *out, size_t maxlen) {
+    float value;
+    if(api_get_target_x0_relative(&value) != API_OK) return ESP_FAIL;
+    snprintf(out, maxlen, ":%f", value);
+    return ESP_OK;
+}
+static esp_err_t target_get_y0_relative(char *out, size_t maxlen) {
+    float value;
+    if(api_get_target_y0_relative(&value) != API_OK) return ESP_FAIL;
+    snprintf(out, maxlen, ":%f", value);
+    return ESP_OK;
+}
 static esp_err_t target_get_tol(char *out, size_t maxlen) {
     float value;
     if(api_get_target_tol(&value) != API_OK) return ESP_FAIL;
@@ -182,6 +209,12 @@ static esp_err_t target_get_threshold(char *out, size_t maxlen) {
     float value;
     if(api_get_target_threshold(&value) != API_OK) return ESP_FAIL;
     snprintf(out, maxlen, ":%f", value);
+    return ESP_OK;
+}
+static esp_err_t target_get_ROI_bound(char *out, size_t maxlen) {
+    int value;
+    if(api_get_target_ROI_bound(&value) != API_OK) return ESP_FAIL;
+    snprintf(out, maxlen, ":%d", value);
     return ESP_OK;
 }
 static esp_err_t target_get_error_x(char *out, size_t maxlen) {
@@ -213,6 +246,18 @@ static esp_err_t centroid_get_x0(char *out, size_t maxlen) {
 static esp_err_t centroid_get_y0(char *out, size_t maxlen) {
     float value;
     if(api_get_centroid_y0(&value) != API_OK) return ESP_FAIL;
+    snprintf(out, maxlen, ":%f", value);
+    return ESP_OK;
+}
+static esp_err_t centroid_get_x0_relative(char *out, size_t maxlen) {
+    float value;
+    if(api_get_centroid_x0_relative(&value) != API_OK) return ESP_FAIL;
+    snprintf(out, maxlen, ":%f", value);
+    return ESP_OK;
+}
+static esp_err_t centroid_get_y0_relative(char *out, size_t maxlen) {
+    float value;
+    if(api_get_centroid_y0_relative(&value) != API_OK) return ESP_FAIL;
     snprintf(out, maxlen, ":%f", value);
     return ESP_OK;
 }
@@ -292,6 +337,31 @@ static void send_image_chunked_sync(uint8_t *data, uint32_t len) {
 
 }
 
+static esp_err_t image_get_image(char *out, size_t maxlen) {
+    (void)out;
+    (void)maxlen;
+
+    uint8_t *img_buf = NULL;
+    size_t img_len = 0;
+
+    if (!get_image_large(&img_buf, &img_len)) {
+        write(STDOUT_FILENO, ":ERR\n", 5);
+        return ESP_FAIL;
+    }
+
+    esp_log_level_set("*", ESP_LOG_NONE);
+
+    send_image_chunked(img_buf, img_len);
+
+    esp_log_level_set("*", ESP_LOG_INFO);
+
+    free(img_buf);
+
+    ESP_LOGI(TAG, "Image sent (%u bytes)", (unsigned)img_len);
+
+    return ESP_OK;
+}
+
 static esp_err_t image_get_preview(char *out, size_t maxlen) {
     (void)out;
     (void)maxlen;
@@ -333,14 +403,20 @@ static const command_entry_t command_table[] =
     {":roi:enable", ROI_set_enable, ROI_get_enable},
     {":target:x0", target_set_x0, target_get_x0},
     {":target:y0", target_set_y0, target_get_y0},
+    {":target:relative:x0", target_set_x0_relative, target_get_x0_relative},
+    {":target:relative:y0", target_set_y0_relative, target_get_y0_relative},
     {":target:tolerance", target_set_tol, target_get_tol},
     {":target:threshold", target_set_threshold, target_get_threshold},
-    {":target:error_x", NULL, target_get_error_x},
-    {":target:error_y", NULL, target_get_error_y},
+    {":target:error:x", NULL, target_get_error_x},
+    {":target:error:y", NULL, target_get_error_y},
     {":target:hit", NULL, target_get_is_hit},
+    {":target:bindroi", target_set_ROI_bound, target_get_ROI_bound},
     {":centroid:x0", NULL, centroid_get_x0},
+    {":centroid:relative:x0", NULL, centroid_get_x0_relative},
     {":centroid:y0", NULL, centroid_get_y0},
+    {":centroid:relative:y0", NULL, centroid_get_y0_relative},
     {":image:capture", image_set_capture, NULL},
+    {":image:image", NULL, image_get_image},
     {":image:preview", NULL, image_get_preview},
 };
 
